@@ -1,0 +1,51 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: ospexCOR
+    network: matic
+    source:
+      address: "0x6342692B76273554beb4Ce1284ac6a92Ef645e79"
+      abi: ospexCOR
+      startBlock: 50562696
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ContestCreated
+        - ContestScored
+        - OwnershipTransferRequested
+        - OwnershipTransferred
+        - RequestFulfilled
+        - RequestSent
+        - Response
+        - RoleAdminChanged
+        - RoleGranted
+        - RoleRevoked
+      abis:
+        - name: ospexCOR
+          file: ./abis/ospexCOR.json
+      eventHandlers:
+        - event: ContestCreated(indexed uint256,string,string,string,address,uint256)
+          handler: handleContestCreated
+        - event: ContestScored(indexed uint256,uint32,uint32)
+          handler: handleContestScored
+        - event: OwnershipTransferRequested(indexed address,indexed address)
+          handler: handleOwnershipTransferRequested
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: RequestFulfilled(indexed bytes32)
+          handler: handleRequestFulfilled
+        - event: RequestSent(indexed bytes32)
+          handler: handleRequestSent
+        - event: Response(indexed bytes32,bytes,bytes)
+          handler: handleResponse
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+      file: ./src/ospex-cor.ts
