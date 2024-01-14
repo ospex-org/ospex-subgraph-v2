@@ -3,6 +3,9 @@
     "ospexCOR": {
       "address": "0x6342692B76273554beb4Ce1284ac6a92Ef645e79",
       "startBlock": 50562696
+    },
+    "ospexCFP": {
+      "address": "0x4fE4732953Ccfb58976B4fab8A8623876Fa2A44E"
     }
   }
 }
