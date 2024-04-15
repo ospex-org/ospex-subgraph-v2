@@ -841,6 +841,62 @@ export class User extends Entity {
       this.set("totalPending", Value.fromBigInt(<BigInt>value));
     }
   }
+
+  get wins(): i32 {
+    let value = this.get("wins");
+    if (!value || value.kind == ValueKind.NULL) {
+      return 0;
+    } else {
+      return value.toI32();
+    }
+  }
+
+  set wins(value: i32) {
+    this.set("wins", Value.fromI32(value));
+  }
+
+  get losses(): i32 {
+    let value = this.get("losses");
+    if (!value || value.kind == ValueKind.NULL) {
+      return 0;
+    } else {
+      return value.toI32();
+    }
+  }
+
+  set losses(value: i32) {
+    this.set("losses", Value.fromI32(value));
+  }
+
+  get ties(): i32 {
+    let value = this.get("ties");
+    if (!value || value.kind == ValueKind.NULL) {
+      return 0;
+    } else {
+      return value.toI32();
+    }
+  }
+
+  set ties(value: i32) {
+    this.set("ties", Value.fromI32(value));
+  }
+
+  get net(): BigInt | null {
+    let value = this.get("net");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set net(value: BigInt | null) {
+    if (!value) {
+      this.unset("net");
+    } else {
+      this.set("net", Value.fromBigInt(<BigInt>value));
+    }
+  }
 }
 
 export class SpeculationLoader extends Entity {

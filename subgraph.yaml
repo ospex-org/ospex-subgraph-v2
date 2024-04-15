@@ -4,12 +4,12 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: ospexCOR
+    name: ospexCOR2
     network: matic
     source:
-      address: "0x6342692B76273554beb4Ce1284ac6a92Ef645e79"
+      address: "0x415713dD8Db291a48957237eFb860c948F804197"
       abi: ContestOracleResolved
-      startBlock: 50562696
+      startBlock: 53522441
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -27,12 +27,12 @@ dataSources:
           handler: handleContestScored
       file: ./src/mapping.ts
   - kind: ethereum/contract
-    name: ospexCFP
+    name: ospexCFP2
     network: matic
     source:
-      address: "0x4fE4732953Ccfb58976B4fab8A8623876Fa2A44E"
+      address: "0x904029883412427994a4d32e496d0e7f5743e193"
       abi: CFPv1
-      startBlock: 50563187
+      startBlock: 53523149
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6

@@ -51,12 +51,11 @@ class PositionTypeSpecified {
   static Under: string = "Under"
 }
 
-const totalAddress = Address.fromString("0x29b2e956B50AfF3292f75FE2C40105AA6560a847")
+const totalAddress = Address.fromString("0x4be070cb3f4c6ce07fec0586e3d7453b5dce33e3")
 
 export function handleContestCreated(event: ContestCreated): void {
 
   const id = event.params.contestId
-
   const contest = new Contest(id.toString())
 
   contest.contestCreator = event.params.contestCreator
@@ -97,7 +96,6 @@ export function handleContestCreated(event: ContestCreated): void {
 export function handleContestScored(event: ContestScored): void {
 
   const id = event.params.contestId
-
   let contest = Contest.load(id.toString())
 
   if (contest) {
@@ -106,13 +104,11 @@ export function handleContestScored(event: ContestScored): void {
     contest.contestStatus = ContestStatus.Scored
     contest.save()
   }
-
 }
 
 export function handleSpeculationCreated(event: SpeculationCreated): void {
 
   const id = event.params.speculationId
-
   const speculation = new Speculation(id.toString())
 
   speculation.lockTime = <i32>parseInt(event.params.lockTime.toString())
@@ -127,24 +123,20 @@ export function handleSpeculationCreated(event: SpeculationCreated): void {
   speculation.speculationStatus = SpeculationStatus.Open
 
   speculation.save()
-
 }
 
 export function handleSpeculationLocked(event: SpeculationLocked): void {
   const id = event.params.speculationId
-
   let speculation = Speculation.load(id.toString())
 
   if (speculation) {
     speculation.speculationStatus = SpeculationStatus.Locked
     speculation.save()
   }
-
 }
 
 export function handleSpeculationScored(event: SpeculationScored): void {
   const id = event.params.speculationId
-
   let speculation = Speculation.load(id.toString())
 
   if (speculation) {
@@ -170,54 +162,57 @@ export function handleSpeculationScored(event: SpeculationScored): void {
       speculation.winSide = WinSide.Void
     }
 
-    let positionIds = speculation.positionIds
-    if (!positionIds) {
-      positionIds = []
-    }
+    if (speculation.positionIds) {
+      for (let i = 0; i < speculation.positionIds!.length; i++) {
+        let positionId = speculation.positionIds![i]
+        let position = Position.load(positionId)
 
-    for (let i = 0; i < positionIds.length; i++) {
-      let positionId = positionIds[i]
-      let position = Position.load(positionId)
-      if (position) {
-        let user = User.load(position.userId!)
-        if (user) {
-          if (!user.totalClaimable) {
-            user.totalClaimable = new BigInt(0)
-          }
-          if (!user.totalLost) {
-            user.totalLost = new BigInt(0)
-          }
+        if (position) {
+          let user = User.load(position.userId!)
+          if (user) {
+            user.totalClaimable = user.totalClaimable || new BigInt(0)
+            user.totalLost = user.totalLost || new BigInt(0)
+            user.totalPending = user.totalPending || new BigInt(0)
+            user.wins = user.wins || 0
+            user.losses = user.losses || 0
+            user.ties = user.ties || 0
+            user.net = user.net || new BigInt(0)
 
-          let winnings = new BigInt(0)
-          let totalAmount = speculation.upperAmount!.plus(speculation.lowerAmount!)
+            user.totalPending = user.totalPending!.minus(position.amount!)
 
-          if ((speculation.winSide == WinSide.Away || speculation.winSide == WinSide.Over) &&
-            (position.positionType == PositionTypeSpecified.Away || position.positionType == PositionTypeSpecified.Over)) {
-            winnings = position.amount!.times(totalAmount).div(speculation.upperAmount!)
-          } else if ((speculation.winSide == WinSide.Home || speculation.winSide == WinSide.Under) &&
-            (position.positionType == PositionTypeSpecified.Home || position.positionType == PositionTypeSpecified.Under)) {
-            winnings = position.amount!.times(totalAmount).div(speculation.lowerAmount!)
-          } else {
-            winnings = position.amount!
-          }
+            let winnings = new BigInt(0)
+            if (speculation.winSide == WinSide.Push || speculation.winSide == WinSide.Forfeit || speculation.winSide == WinSide.Invalid || speculation.winSide == WinSide.Void) {
+              winnings = position.amount!
+              user.ties += 1
+            } else if (speculation.winSide != position.positionType) {
+              user.totalLost = user.totalLost!.plus(position.amount!)
+              user.losses += 1
+              user.net = user.net!.minus(position.amount!)
+            } else {
+              let totalAmount = speculation.upperAmount!.plus(speculation.lowerAmount!)
+              if ((speculation.winSide == WinSide.Away || speculation.winSide == WinSide.Over) &&
+                (position.positionType == PositionTypeSpecified.Away || position.positionType == PositionTypeSpecified.Over)) {
+                winnings = position.amount!.times(totalAmount).div(speculation.upperAmount!)
+                user.wins += 1
+                user.net = user.net!.plus(winnings)
+                user.net = user.net!.minus(position.amount!)
+              } else if ((speculation.winSide == WinSide.Home || speculation.winSide == WinSide.Under) &&
+                (position.positionType == PositionTypeSpecified.Home || position.positionType == PositionTypeSpecified.Under)) {
+                winnings = position.amount!.times(totalAmount).div(speculation.lowerAmount!)
+                user.wins += 1
+                user.net = user.net!.plus(winnings)
+                user.net = user.net!.minus(position.amount!)
+              }
 
-          if (speculation.winSide == position.positionType ||
-            speculation.winSide == WinSide.Push ||
-            speculation.winSide == WinSide.Forfeit ||
-            speculation.winSide == WinSide.Invalid ||
-            speculation.winSide == WinSide.Void) {
-            user.totalClaimable = user.totalClaimable!.plus(winnings)
-          } else {
-            user.totalLost = user.totalLost!.plus(position.amount!)
+              user.totalClaimable = user.totalClaimable!.plus(winnings)
+            }
+            user.save()
           }
         }
-        user!.save()
       }
     }
-
     speculation.save()
   }
-
 }
 
 export function handlePositionCreated(event: PositionCreated): void {
@@ -235,8 +230,10 @@ export function handlePositionCreated(event: PositionCreated): void {
     if (!positionIds) {
       positionIds = []
     }
-    positionIds.push(id)
-    speculation.positionIds = positionIds
+    if (!positionIds.includes(id)) {
+      positionIds.push(id)
+      speculation.positionIds = positionIds
+    }
   }
 
   if (speculation && speculation.speculationScorer! == totalAddress && event.params.positionType === 0) {
@@ -284,6 +281,7 @@ export function handlePositionCreated(event: PositionCreated): void {
   }
 
   user.totalSpeculated = user.totalSpeculated!.plus(event.params.amount)
+  user.totalPending = user.totalPending!.plus(event.params.amount)
   if (event.params.contributionAmount.gt(new BigInt(0))) {
     user.totalContributed = user.totalContributed!.plus(event.params.contributionAmount)
   }
@@ -291,7 +289,6 @@ export function handlePositionCreated(event: PositionCreated): void {
   position.save()
   speculation!.save()
   user.save()
-
 }
 
 export function handleClaim(event: Claim): void {
@@ -316,8 +313,13 @@ export function handleClaim(event: Claim): void {
       let position = Position.load(positionIds[i])
       if (position) {
         position.claimed = true
-        position.amountClaimed = event.params.amount
-        position.contributedUponClaim = event.params.contributionAmount
+        if (speculation.winSide == "Push" || speculation.winSide == "Forfeit" || speculation.winSide == "Invalid" || speculation.winSide == "Void") {
+          position.amountClaimed = position.amount
+          position.contributedUponClaim = event.params.contributionAmount.div(new BigInt(2))
+        } else {
+          position.amountClaimed = event.params.amount
+          position.contributedUponClaim = event.params.contributionAmount
+        }
         position.save()
       }
     }
@@ -327,7 +329,9 @@ export function handleClaim(event: Claim): void {
     user.totalClaimed = user.totalClaimed!.plus(event.params.amount)
     user.totalClaimable = user.totalClaimable!.minus(event.params.amount)
     user.totalContributed = user.totalContributed!.plus(event.params.contributionAmount)
+    if (event.params.contributionAmount.gt(new BigInt(0))) {
+      user.totalClaimed = user.totalClaimed!.minus(event.params.contributionAmount)
+    }
     user.save()
   }
-
 }

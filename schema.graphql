@@ -59,6 +59,10 @@ type User @entity {
     totalContributed: BigInt
     totalLost: BigInt
     totalPending: BigInt
+    wins: Int
+    losses: Int
+    ties: Int
+    net: BigInt
 }
 
 enum ContestStatus {
