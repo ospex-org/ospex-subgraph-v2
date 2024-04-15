@@ -203,9 +203,8 @@ export function handleSpeculationScored(event: SpeculationScored): void {
                 user.net = user.net!.plus(winnings)
                 user.net = user.net!.minus(position.amount!)
               }
-
-              user.totalClaimable = user.totalClaimable!.plus(winnings)
             }
+            user.totalClaimable = user.totalClaimable!.plus(winnings)
             user.save()
           }
         }
@@ -315,7 +314,7 @@ export function handleClaim(event: Claim): void {
         position.claimed = true
         if (speculation.winSide == "Push" || speculation.winSide == "Forfeit" || speculation.winSide == "Invalid" || speculation.winSide == "Void") {
           position.amountClaimed = position.amount
-          position.contributedUponClaim = event.params.contributionAmount.div(new BigInt(2))
+          position.contributedUponClaim = positionIds[i].endsWith("0") ? event.params.contributionAmount : new BigInt(0)
         } else {
           position.amountClaimed = event.params.amount
           position.contributedUponClaim = event.params.contributionAmount
